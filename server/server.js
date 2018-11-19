@@ -22,23 +22,35 @@ pool.on('connect', () => {
 pool.on('error', (err) => {
     console.log('error with DB:', err);
 })
-
 // spin up server
 app.listen( port, ( req, res )=>{
     console.log( 'server up on:', port );
 });
 
 // test route
-app.get('/test', (req, res) => {
+app.get('/songs', (req, res) => {
     console.log('/test GET hit');
     // create query
     const queryString = 'SELECT * FROM songs;';
-    pool
-        .query(queryString)
+    pool.query(queryString)
         .then((results) => {
             res.send(results.rows);
         })
         .catch( (err) => {
             console.log('error retrieving data:', err)
+        });
+});
+
+app.post('/songs', (req, res) => {
+    console.log('in /songs POST:', req.body);
+    const queryString = `INSERT INTO songs (artist, track, rank, published)
+        VALUES ($1, $2, $3, $4);`; // parameterized query
+    pool.query(queryString,
+        [ req.body.artist, req.body.track, req.body.rank, req.body.published])
+        .then((response) => {
+            res.sendStatus(201);
+        }).catch((err) => {
+            console.log('error writing song:', err);
+            res.sendStatus(500); // maybe this number is inspecific;
         });
 });
